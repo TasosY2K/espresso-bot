@@ -86,6 +86,9 @@ exports.run = async (client, message, args) => {
                         **City**: ${element.city}
                         **Location**: https://www.google.com/maps/search/?api=1&query=${element.lat},${element.lon}
                         **ISP**: ${element.isp}
+                        **Hostname**: ${element.hostname}
+                        **Platform**: ${element.platform}
+                        **Arch**: ${element.arch}
                     `,
                 })
                 .setThumbnail(

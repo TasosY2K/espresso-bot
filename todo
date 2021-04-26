@@ -2,8 +2,6 @@ custom user-agents
 self spreading
 startup
 files + http encryption
-update endpoint
-details endpoint
 add loader
 jwt
 ip blacklist

@@ -4,6 +4,7 @@ const filewalker = require("../library/walk.js");
 
 const application = express();
 
+application.use(express.json())
 application.use(express.static(path.join(__dirname, "public")));
 
 const init = async (client, secret) => {

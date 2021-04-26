@@ -2,35 +2,31 @@ module.exports = (sequelize, Sequelize) => {
     const Boot = sequelize.define("boot", {
         tracknum: {
             type: Sequelize.INTEGER,
-            allowNull: true,
+            allowNull: false,
         },
         identifier: {
             type: Sequelize.STRING,
-            allowNull: true,
+            allowNull: false,
         },
         ip: {
             type: Sequelize.STRING,
-            allowNull: true,
+            allowNull: false,
         },
         port: {
             type: Sequelize.INTEGER,
-            allowNull: true,
+            allowNull: false,
         },
         duration: {
             type: Sequelize.INTEGER,
-            allowNull: true,
+            allowNull: false,
         },
         startTime: {
             type: Sequelize.DATE,
-            allowNull: true,
+            allowNull: false,
         },
         endTime: {
             type: Sequelize.DATE,
-            allowNull: true,
-        },
-        replies: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
+            allowNull: false,
         },
     });
     return Boot;

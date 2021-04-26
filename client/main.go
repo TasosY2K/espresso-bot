@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -122,6 +123,24 @@ func readFromBootFile(filePath string) string {
 	return result
 }
 
+func updateDetails(apiURL string, id string, token string) {
+	var updateURL string = apiURL + "/update/details/" + id + "/" + token
+
+	hostname, _ := os.Hostname()
+
+	requestBody, _ := json.Marshal(map[string]string{
+		"hostname": hostname,
+		"platform": runtime.GOOS,
+		"arch":     runtime.GOARCH,
+	})
+
+	resp, err := http.Post(updateURL, "application/json", bytes.NewBuffer(requestBody))
+
+	if err == nil {
+		defer resp.Body.Close()
+	}
+}
+
 func checkBoot(apiURL string, id string, token string) bool {
 	var result bool
 	var bootURL string = apiURL + "/boot/" + id + "/" + token
@@ -227,6 +246,8 @@ func main() {
 			var credsValidated = checkAccount(apiURL, credidentials[0], credidentials[1])
 
 			if credsValidated {
+
+				updateDetails(apiURL, credidentials[0], credidentials[1])
 
 				for range time.NewTicker(5 * time.Second).C {
 					bootRun(apiURL, credidentials[0], credidentials[1], bootFilePath)

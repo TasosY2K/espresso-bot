@@ -61,7 +61,7 @@ module.exports = (application) => {
     application.post("/update/details/:identifier/:token", async (req, res) => {
         const { identifier, token } = req.params;
         const postdata = req.body;
-        if (identifier && token) {
+        if (identifier && token && postdata) {
             const verify = await v.validate(identifier, token);
             if (verify) {
                 const ipAddress = "78.87.194.58";
@@ -79,6 +79,10 @@ module.exports = (application) => {
                 options.lat = ipInfo.lat;
                 options.lon = ipInfo.lon;
                 options.isp = ipInfo.isp;
+
+                options.hostname = postdata.hostname;
+                options.platform = postdata.platform;
+                options.arch = postdata.arch;
 
                 db.Client.update(options, {
                     where: {
