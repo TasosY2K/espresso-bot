@@ -4,16 +4,32 @@ const { Client, Collection } = require("discord.js");
 const api = require("./api");
 const filewalker = require("./library/walk.js");
 
+const allowedUsers = require("../users.json");
+
 const dotenv = require("dotenv");
 dotenv.config();
 
 const db = require("./models");
+const Op = db.Sequelize.Op;
+
 db.sequelize.sync();
+
+setInterval(() => {
+    db.Boot.destroy({
+        where: {
+            endTime: {
+                [Op.lt]: new Date(),
+            },
+        },
+    });
+}, 60000);
 
 init = async (
     settings = {
         token: process.env.BOT_TOKEN,
         fallbackPrefix: process.env.BOT_PREFIX,
+        version: process.env.npm_package_version,
+        allowedUsers: allowedUsers.users,
         blacklistedUsers: [],
         blacklistedGuilds: [],
         sharding: false,

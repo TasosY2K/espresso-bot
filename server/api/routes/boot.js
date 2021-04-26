@@ -7,25 +7,37 @@ module.exports = (application) => {
         if (identifier && token) {
             const verify = await v.validate(identifier, token);
             if (verify) {
-                db.Client.findAll({
+                const results = await db.Boot.findAll({
                     where: {
-                        id: 1,
+                        tracknum: 1,
                     },
-                }).then((results) => {
-                    if (results.length > 0) {
+                });
+
+                if (results.length > 0) {
+                    if (results[0].endTime > new Date()) {
                         res.status(200).json({
                             identifier: results[0].identifier,
                             ip: results[0].ip,
                             port: results[0].port,
                             host: results[0].host,
-                            duration: results[0].duration,
+                            endTime: results[0].endTime,
                         });
                     } else {
+                        await db.Boot.destroy({
+                            where: {
+                                tracknum: 1,
+                            },
+                        });
+
                         res.status(403).json({
                             message: "No booting instructions found",
                         });
                     }
-                });
+                } else {
+                    res.status(403).json({
+                        message: "No booting instructions found",
+                    });
+                }
             } else {
                 res.status(401).json({
                     message: "Bot not found or token/id is invalid",

@@ -5,6 +5,10 @@ module.exports = async (client, message) => {
 
     if (message.author.bot || message.content.indexOf(prefix) !== 0) return;
 
+    if (!client.settings.allowedUsers.includes(message.author.id)) {
+        return message.channel.send("Fuck you, you're not in the whitelist");
+    }
+
     console.log(
         `[MESSAGE] message recieved in ${message.guild} from ${message.author.id}`
     );
