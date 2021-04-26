@@ -16,9 +16,7 @@ exports.run = async (client, message, args) => {
                 let expDate = new Date();
                 expDate.setTime(expDate.getTime() - 5 * 60 * 1000);
                 const formattedDate =
-                    element.lastLogin > expDate
-                        ? "🟢 Online"
-                        : "🔴 Offline";
+                    element.lastLogin > expDate ? "🟢 Online" : "🔴 Offline";
 
                 fields.push({
                     name: !element.tag ? "No tag" : element.tag,

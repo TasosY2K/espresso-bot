@@ -54,16 +54,16 @@ module.exports = (sequelize, Sequelize) => {
         },
         hostname: {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         },
         platform: {
             type: Sequelize.STRING,
-            allowNull: true
+            allowNull: true,
         },
         arch: {
             type: Sequelize.STRING,
-            allowNull: true
-        }
+            allowNull: true,
+        },
     });
     return Client;
 };

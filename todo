@@ -3,5 +3,3 @@ self spreading
 startup
 files + http encryption
 add loader
-jwt
-ip blacklist

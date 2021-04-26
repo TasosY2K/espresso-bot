@@ -19,12 +19,11 @@ exports.run = async (client, message, args) => {
                     },
                 }
             );
-            
+
             message.channel.send("Tag updated");
         } else {
             message.channel.send("Invalid ID");
         }
-
     } else {
         message.channel.send("Invalid arguments");
     }

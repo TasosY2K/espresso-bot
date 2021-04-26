@@ -1,13 +1,13 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 const path = require("path");
 const { Client, Collection } = require("discord.js");
 
 const api = require("./api");
 const filewalker = require("./library/walk.js");
 
-const allowedUsers = require("../users.json");
-
-const dotenv = require("dotenv");
-dotenv.config();
+const allowedUsers = require("../" + process.env.USER_WHITELIST_PATH);
 
 const db = require("./models");
 const Op = db.Sequelize.Op;

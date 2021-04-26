@@ -1,10 +1,13 @@
 const express = require("express");
+const ipfilter = require("ipfilter");
 const path = require("path");
 const filewalker = require("../library/walk.js");
+const blockedIps = require("../../" + process.env.IP_BLACKLIST_PATH);
 
 const application = express();
 
-application.use(express.json())
+application.use(express.json());
+application.use(ipfilter(blockedIps.addresses));
 application.use(express.static(path.join(__dirname, "public")));
 
 const init = async (client, secret) => {

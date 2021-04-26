@@ -9,11 +9,12 @@ module.exports = (application) => {
             if (verify) {
                 await db.Client.update(
                     {
-                        lastLogin: new Date()
-                    }, {
+                        lastLogin: new Date(),
+                    },
+                    {
                         where: {
                             identifier: identifier,
-                        }
+                        },
                     }
                 );
 
