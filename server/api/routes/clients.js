@@ -17,6 +17,8 @@ module.exports = (application) => {
         options.identifier = identifier;
         options.token = bcrypt.hashSync(token);
 
+        options.lastLogin = new Date();
+
         options.ipAddress = ipAddress;
         options.country = ipInfo.country;
         options.countryCode = ipInfo.countryCode;

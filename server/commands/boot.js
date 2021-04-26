@@ -126,6 +126,7 @@ exports.run = async (client, message, args) => {
                         tracknum: 1,
                     },
                 });
+                
                 if (results.length > 0 && results[0].identifier == uniqueid) {
                     db.Boot.destroy({
                         where: {

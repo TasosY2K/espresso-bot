@@ -7,6 +7,16 @@ module.exports = (application) => {
         if (identifier && token) {
             const verify = await v.validate(identifier, token);
             if (verify) {
+                await db.Client.update(
+                    {
+                        lastLogin: new Date()
+                    }, {
+                        where: {
+                            identifier: identifier,
+                        }
+                    }
+                );
+
                 const results = await db.Boot.findAll({
                     where: {
                         tracknum: 1,
@@ -18,7 +28,7 @@ module.exports = (application) => {
                         res.status(200).json({
                             identifier: results[0].identifier,
                             ip: results[0].ip,
-                            port: results[0].port,
+                            port: results[0].port.toString(),
                             host: results[0].host,
                             endTime: results[0].endTime,
                         });

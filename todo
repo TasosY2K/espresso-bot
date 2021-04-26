@@ -2,10 +2,7 @@ custom user-agents
 self spreading
 startup
 files + http encryption
-fix types and callback hell
-fix last login
 update endpoint
-client response endpoint
 details endpoint
 add loader
 jwt

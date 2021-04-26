@@ -1,6 +1,6 @@
 {
     "name": "espresso-bot",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "main": "index.js",
     "author": "LeanDev <tmeletlidis@protonmail.com>",
     "license": "MIT",

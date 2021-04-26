@@ -16,6 +16,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        lastLogin: {
+            type: Sequelize.DATE,
+            allowNull: false,
+        },
         country: {
             type: Sequelize.STRING,
             allowNull: false,
@@ -37,11 +41,11 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
         },
         lat: {
-            type: Sequelize.STRING,
+            type: Sequelize.FLOAT,
             allowNull: false,
         },
         lon: {
-            type: Sequelize.STRING,
+            type: Sequelize.FLOAT,
             allowNull: false,
         },
         isp: {

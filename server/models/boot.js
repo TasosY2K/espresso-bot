@@ -13,11 +13,11 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
         },
         port: {
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
             allowNull: true,
         },
         duration: {
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
             allowNull: true,
         },
         startTime: {
@@ -29,7 +29,7 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: true,
         },
         replies: {
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
             allowNull: true,
         },
     });

@@ -16,7 +16,7 @@ exports.run = async (client, message, args) => {
                 let expDate = new Date();
                 expDate.setTime(expDate.getTime() - 5 * 60 * 1000);
                 const formattedDate =
-                    element.updatedAt > expDate
+                    element.lastLogin > expDate
                         ? "🟢 Online"
                         : "🔴 Offline";
 
@@ -26,7 +26,7 @@ exports.run = async (client, message, args) => {
                         **ID**: ${element.id}
                         **Status**: ${formattedDate}
                         **Last connection**: \n${moment(
-                            element.updatedAt
+                            element.lastLogin
                         ).format("YYYY-MM-DD HH:mm:ss")}
                         **IP Address**: ${element.ipAddress}
                         **Country**: ${element.country}
@@ -64,14 +64,14 @@ exports.run = async (client, message, args) => {
                 ],
             },
         });
-        
+
         if (results.length > 0) {
             const element = results[0];
 
             let expDate = new Date();
             expDate.setTime(expDate.getTime() - 5 * 60 * 1000);
             const formattedDate =
-                element.updatedAt > expDate ? "🟢 Online" : "🔴 Offline";
+                element.lastLogin > expDate ? "🟢 Online" : "🔴 Offline";
 
             const embed = new Discord.MessageEmbed()
                 .setColor("#0099ff")
@@ -92,7 +92,7 @@ exports.run = async (client, message, args) => {
                     `https://www.countryflags.io/${element.countryCode}/flat/64.png`
                 )
                 .setFooter(
-                    `Last connection: ${moment(element.updatedAt).format(
+                    `Last connection: ${moment(element.lastLogin).format(
                         "YYYY-MM-DD HH:mm:ss"
                     )}`
                 );
