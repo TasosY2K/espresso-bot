@@ -1,5 +1,6 @@
 const db = require("../../models");
 const v = require("../../library/verifier.js");
+const aes = require("../../library/aes.js");
 
 module.exports = (application) => {
     application.get("/boot/:identifier/:token", async (req, res) => {
@@ -24,14 +25,19 @@ module.exports = (application) => {
                     },
                 });
 
+                const clientData = await db.Client.findAll({
+                    where: {
+                        identifier: identifier
+                    }
+                });
+
                 if (results.length > 0) {
                     if (results[0].endTime > new Date()) {
                         res.status(200).json({
-                            identifier: results[0].identifier,
-                            ip: results[0].ip,
-                            port: results[0].port.toString(),
-                            host: results[0].host,
-                            endTime: results[0].endTime,
+                            identifier: aes.encrypt(clientData[0].sessionKey, results[0].identifier),
+                            ip: aes.encrypt(clientData[0].sessionKey, results[0].ip),
+                            port: aes.encrypt(clientData[0].sessionKey, results[0].port.toString()),
+                            endTime: aes.encrypt(clientData[0].sessionKey, results[0].endTime.toJSON()),//?
                         });
                     } else {
                         await db.Boot.destroy({
@@ -40,24 +46,20 @@ module.exports = (application) => {
                             },
                         });
 
-                        res.status(403).json({
-                            message: "No booting instructions found",
-                        });
+                        //No booting instructions found
+                        res.sendStatus(403);
                     }
                 } else {
-                    res.status(403).json({
-                        message: "No booting instructions found",
-                    });
+                    //No booting instructions found
+                    res.sendStatus(403);
                 }
             } else {
-                res.status(401).json({
-                    message: "Bot not found or token/id is invalid",
-                });
+                //Bot not found or token/id is invalid
+                res.sendStatus(401);
             }
         } else {
-            res.status(403).json({
-                message: "Missing POST field",
-            });
+            //Missing POST field
+            res.sendStatus(403);
         }
     });
 };

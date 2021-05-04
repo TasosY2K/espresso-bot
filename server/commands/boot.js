@@ -32,7 +32,7 @@ exports.run = async (client, message, args) => {
             if (results.length > 0) {
                 if (results[0].endTime > new Date()) {
                     message.channel.send(
-                        `\`\`\`ID: ${results[0].identifier}\nIP: ${results[0].ip}\nPORT: ${results[0].port}\nDURATION: ${results[0].duration} minutes\`\`\``
+                        `\`\`\`ID: ${results[0].identifier}\nIP: ${results[0].ip}\nPORT: ${results[0].port}\nSTARTED AT: ${results[0].createdAt.toLocaleString()}\nENDING AT: ${results[0].endTime.toLocaleString()}\nDURATION: ${results[0].duration} minutes\`\`\``
                     );
                 } else {
                     await db.Boot.destroy({

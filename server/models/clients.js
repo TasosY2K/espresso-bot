@@ -12,6 +12,14 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        sessionKey: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
+        sessionEnd: {
+            type: Sequelize.DATE,
+            allowNull: false,
+        },
         ipAddress: {
             type: Sequelize.STRING,
             allowNull: false,

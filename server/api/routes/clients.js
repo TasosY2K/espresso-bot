@@ -2,6 +2,7 @@ const { nanoid } = require("nanoid");
 const bcrypt = require("bcryptjs");
 const db = require("../../models");
 const ip = require("../../library/ip.js");
+const aes = require("../../library/aes.js");
 const v = require("../../library/verifier.js");
 
 module.exports = (application) => {
@@ -12,10 +13,16 @@ module.exports = (application) => {
         let ipInfo = await ip.info(ipAddress);
         ipInfo = ipInfo.data;
 
+        let sessionEnd = new Date();
+        sessionEnd.setTime(sessionEnd.getTime() + process.env.SESSION_DURATION * 60 * 1000);
+
         let options = {};
 
         options.identifier = identifier;
         options.token = bcrypt.hashSync(token);
+
+        options.sessionKey = nanoid(32); 
+        options.sessionEnd = sessionEnd;
 
         options.lastLogin = new Date();
 
@@ -43,18 +50,15 @@ module.exports = (application) => {
         if (identifier && token) {
             const verify = await v.validate(identifier, token);
             if (verify) {
-                res.status(200).json({
-                    message: "Client found and token matches",
-                });
+                //Client found and token matches
+                res.sendStatus(200);
             } else {
-                res.status(401).json({
-                    message: "Client not found or token/id is invalid",
-                });
+                //Client not found or token/id is invalid
+                res.sendStatus(401);
             }
         } else {
-            res.status(403).json({
-                message: "Missing POST field",
-            });
+            //Missing POST field
+            res.sendStatus(403);
         }
     });
 
@@ -80,28 +84,31 @@ module.exports = (application) => {
                 options.lon = ipInfo.lon;
                 options.isp = ipInfo.isp;
 
-                options.hostname = postdata.hostname;
-                options.platform = postdata.platform;
-                options.arch = postdata.arch;
+                const clientData = await db.Client.findAll({
+                    where: {
+                        identifier: identifier
+                    }
+                });
+
+                options.hostname = aes.decrypt(clientData[0].sessionKey, postdata.hostname);
+                options.platform = aes.decrypt(clientData[0].sessionKey, postdata.platform);
+                options.arch = aes.decrypt(clientData[0].sessionKey, postdata.arch);
 
                 db.Client.update(options, {
                     where: {
                         identifier: identifier,
                     },
                 }).then(() => {
-                    res.status(200).json({
-                        message: "Update OK",
-                    });
+                    //Update OK
+                    res.sendStatus(200);
                 });
             } else {
-                res.status(401).json({
-                    message: "Client not found or token/id is invalid",
-                });
+                //Client not found or token/id is invalid
+                res.sendStatus(401);
             }
         } else {
-            res.status(403).json({
-                message: "Missing token/id or not enough POST fields",
-            });
+            //Missing token/id or not enough POST fields
+            res.sendStatus(403);
         }
     });
 };

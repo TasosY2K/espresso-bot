@@ -23,11 +23,9 @@ exports.run = async (client, message, args) => {
                     value: `
                         **ID**: ${element.id}
                         **Status**: ${formattedDate}
-                        **Last connection**: \n${moment(
-                            element.lastLogin
-                        ).format("YYYY-MM-DD HH:mm:ss")}
                         **IP Address**: ${element.ipAddress}
                         **Country**: ${element.country}
+                        **Name**: ${element.hostname}
                     `,
                     inline: true,
                 });
