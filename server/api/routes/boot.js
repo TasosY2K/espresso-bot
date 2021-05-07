@@ -27,17 +27,29 @@ module.exports = (application) => {
 
                 const clientData = await db.Client.findAll({
                     where: {
-                        identifier: identifier
-                    }
+                        identifier: identifier,
+                    },
                 });
 
                 if (results.length > 0) {
                     if (results[0].endTime > new Date()) {
                         res.status(200).json({
-                            identifier: aes.encrypt(clientData[0].sessionKey, results[0].identifier),
-                            ip: aes.encrypt(clientData[0].sessionKey, results[0].ip),
-                            port: aes.encrypt(clientData[0].sessionKey, results[0].port.toString()),
-                            endTime: aes.encrypt(clientData[0].sessionKey, results[0].endTime.toJSON()),//?
+                            identifier: aes.encrypt(
+                                clientData[0].sessionKey,
+                                results[0].identifier
+                            ),
+                            ip: aes.encrypt(
+                                clientData[0].sessionKey,
+                                results[0].ip
+                            ),
+                            port: aes.encrypt(
+                                clientData[0].sessionKey,
+                                results[0].port.toString()
+                            ),
+                            endTime: aes.encrypt(
+                                clientData[0].sessionKey,
+                                results[0].endTime.toJSON()
+                            ), //?
                         });
                     } else {
                         await db.Boot.destroy({

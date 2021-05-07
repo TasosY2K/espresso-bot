@@ -10,22 +10,24 @@ module.exports = (application) => {
         if (identifier && token) {
             const verify = await v.validate(identifier, token);
             if (verify) {
-
                 const results = await db.Client.findAll({
                     where: {
-                        identifier: identifier
-                    }
+                        identifier: identifier,
+                    },
                 });
 
                 if (results[0].sessionEnd > new Date()) {
                     res.status(200).json({
-                        key: results[0].sessionKey
+                        key: results[0].sessionKey,
                     });
                 } else {
                     const sessionKey = nanoid(32);
 
                     let sessionEnd = new Date();
-                    sessionEnd.setTime(sessionEnd.getTime() + process.env.SESSION_DURATION * 60 * 1000);
+                    sessionEnd.setTime(
+                        sessionEnd.getTime() +
+                            process.env.SESSION_DURATION * 60 * 1000
+                    );
 
                     await db.Client.update(
                         {
@@ -40,18 +42,16 @@ module.exports = (application) => {
                     );
 
                     res.status(200).json({
-                        key: sessionKey
+                        key: sessionKey,
                     });
                 }
-
-                
             } else {
                 //Client not found or token/id is invalid
-                res.status(401);
+                res.sendStatus(401);
             }
         } else {
             //Client not found or token/id is invalid
-            res.status(403);
+            res.sendStatus(403);
         }
     });
 };

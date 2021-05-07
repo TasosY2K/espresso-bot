@@ -60,6 +60,15 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        fileToRun: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
+        fileRunStatus: {
+            type: Sequelize.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
         hostname: {
             type: Sequelize.STRING,
             allowNull: true,

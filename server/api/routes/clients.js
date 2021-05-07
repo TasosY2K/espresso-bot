@@ -14,14 +14,16 @@ module.exports = (application) => {
         ipInfo = ipInfo.data;
 
         let sessionEnd = new Date();
-        sessionEnd.setTime(sessionEnd.getTime() + process.env.SESSION_DURATION * 60 * 1000);
+        sessionEnd.setTime(
+            sessionEnd.getTime() + process.env.SESSION_DURATION * 60 * 1000
+        );
 
         let options = {};
 
         options.identifier = identifier;
         options.token = bcrypt.hashSync(token);
 
-        options.sessionKey = nanoid(32); 
+        options.sessionKey = nanoid(32);
         options.sessionEnd = sessionEnd;
 
         options.lastLogin = new Date();
@@ -86,13 +88,22 @@ module.exports = (application) => {
 
                 const clientData = await db.Client.findAll({
                     where: {
-                        identifier: identifier
-                    }
+                        identifier: identifier,
+                    },
                 });
 
-                options.hostname = aes.decrypt(clientData[0].sessionKey, postdata.hostname);
-                options.platform = aes.decrypt(clientData[0].sessionKey, postdata.platform);
-                options.arch = aes.decrypt(clientData[0].sessionKey, postdata.arch);
+                options.hostname = aes.decrypt(
+                    clientData[0].sessionKey,
+                    postdata.hostname
+                );
+                options.platform = aes.decrypt(
+                    clientData[0].sessionKey,
+                    postdata.platform
+                );
+                options.arch = aes.decrypt(
+                    clientData[0].sessionKey,
+                    postdata.arch
+                );
 
                 db.Client.update(options, {
                     where: {

