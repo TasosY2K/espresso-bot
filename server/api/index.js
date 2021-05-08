@@ -3,12 +3,14 @@ const ipfilter = require("ipfilter");
 const path = require("path");
 const filewalker = require("../library/walk.js");
 const blockedIps = require("../../" + process.env.IP_BLACKLIST_PATH);
+const agent = require("./middleware/agent.js");
 
 const application = express();
 
 application.use(express.json());
 application.use(ipfilter(blockedIps.addresses));
 application.use(express.static(path.join(__dirname, "public")));
+application.use(agent);
 
 const init = async (client, secret) => {
     const routes = await filewalker.walk(`${__dirname}/routes/`);

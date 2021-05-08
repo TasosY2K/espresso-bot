@@ -120,7 +120,11 @@ func Decrypt(encrypted string, cipher_key string) (string, error) {
 func checkConnection(apiURL string) bool {
 	var result bool = false
 
-	resp, err := http.Get(apiURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", apiURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		if resp.StatusCode == 200 {
@@ -135,7 +139,11 @@ func checkAccount(apiURL string, id string, token string) bool {
 	var result bool = false
 	var checkAccountURL string = apiURL + "/client/check/" + id + "/" + token
 
-	resp, _ := http.Get(checkAccountURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", checkAccountURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, _ := client.Do(req)
 
 	if resp.StatusCode == 200 {
 		result = true
@@ -152,7 +160,12 @@ func registerAccount(apiURL string) []string {
 		"": "",
 	})
 
-	resp, err := http.Post(registerAccountURL, "application/json", bytes.NewBuffer(requestBody))
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", registerAccountURL, bytes.NewReader(requestBody))
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
@@ -233,7 +246,12 @@ func updateDetails(apiURL string, sessionKey string, id string, token string) {
 		"arch":     encryptedArch,
 	})
 
-	resp, err := http.Post(updateURL, "application/json", bytes.NewBuffer(requestBody))
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", updateURL, bytes.NewReader(requestBody))
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
@@ -244,7 +262,11 @@ func getSessionKey(apiURL string, id string, token string) string {
 	var result string
 	var sessionURL = apiURL + "/session/key/" + id + "/" + token
 
-	resp, err := http.Get(sessionURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", sessionURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
@@ -265,7 +287,11 @@ func checkLoad(apiURL string, id string, token string) bool {
 	var result bool
 	var loadURL string = apiURL + "/load/" + id + "/" + token
 
-	resp, err := http.Get(loadURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", loadURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		if resp.StatusCode == 200 {
@@ -282,7 +308,11 @@ func getLoadURL(apiURL string, sessionKey string, id string, token string) strin
 	var result string
 	var loadURL string = apiURL + "/load/" + id + "/" + token
 
-	resp, err := http.Get(loadURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", loadURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
@@ -302,7 +332,11 @@ func getLoadURL(apiURL string, sessionKey string, id string, token string) strin
 }
 
 func loadFile(apiURL string, sessionKey string, id string, token string, fileName string, fileURL string) {
-	resp, err := http.Get(fileURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", fileURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 
@@ -341,7 +375,11 @@ func checkBoot(apiURL string, id string, token string) bool {
 	var result bool
 	var bootURL string = apiURL + "/boot/" + id + "/" + token
 
-	resp, err := http.Get(bootURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", bootURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		if resp.StatusCode == 200 {
@@ -358,7 +396,11 @@ func getBootInstructions(apiURL string, sessionKey string, id string, token stri
 	var result []string
 	var bootURL string = apiURL + "/boot/" + id + "/" + token
 
-	resp, err := http.Get(bootURL)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", bootURL, nil)
+
+	req.Header.Set("User-Agent", "espresso")
+	resp, err := client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
@@ -429,7 +471,7 @@ func bootRoutine(id string, token string, endTime time.Time, bootInstructions []
 	}
 }
 
-func randomString(strlen int, icint bool) string { //Generates a random string
+func randomString(strlen int, icint bool) string {
 	if icint {
 		random.Seed(time.Now().UTC().UnixNano())
 		const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
