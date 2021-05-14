@@ -39,7 +39,8 @@ Espresso is a simple loader/bot inteded to be used for red team operations at co
 -   Edit `.env` with your info
 -   Edit the **User Whitelist** with your discord id's
 -   Edit the **Ip Blacklist** with your ip's
--   Start server with `yarn start` or `npm start`
+-   Start server with `yarn start` or `npm start` or a process manager (PM2)
+-   Copy invite from terminal and invite the bot into your server
 
 **Client**
 
