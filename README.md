@@ -3,6 +3,8 @@
 HTTP/HTTPS based Golang botnet
 ![image](https://user-images.githubusercontent.com/29873078/118262572-bd23f100-b4bd-11eb-9aed-a5b25bdf4d5b.png)
 
+![20210514_143033](https://user-images.githubusercontent.com/29873078/118265013-47ba1f80-b4c1-11eb-8481-c9d9250c2e23.jpg)
+
 ### Information
 
 Espresso is a simple loader/bot inteded to be used for red team operations at controlled pentetsing enviroments. It features a centralized command & control server, session based API encryption and uses a Discord bot as the admin interface. It uses Rubber ducky or any keyboard emulation capable microcontroller as a spreading agent.
