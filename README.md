@@ -7,7 +7,7 @@ HTTP/HTTPS based Golang botnet
 
 ### Information
 
-Espresso is a simple loader/bot inteded to be used for red team operations at controlled pentetsing enviroments. It features a centralized command & control server, session based API encryption and uses a Discord bot as the admin interface. It uses Rubber ducky or any keyboard emulation capable microcontroller as a spreading agent.
+Espresso is a simple POC loader/bot inteded to be used for red team operations at controlled pentetsing enviroments. It features a centralized command & control server, session based API encryption and uses a Discord bot as the admin interface. It uses Rubber ducky or any keyboard emulation capable microcontroller as a spreading agent.
 
 ### C&C Features
 
@@ -45,10 +45,12 @@ Espresso is a simple loader/bot inteded to be used for red team operations at co
 **Client**
 
 -   Install Golang
+-   Go to `src` dir
+-   Clone this repo `git clone https://github.com/TasosY2K/espresso-bot.git`
 -   cd to `client/` and install Go registry with `go get -u golang.org/x/sys/windows/registry`
 -   Edit the variables in `espresso.go` at the `main` function with your info
 -   Build the client by running `build.bat` or `build.sh`
--   Your coffee is ready `espresso.go`
+-   Your coffee is ready `espresso.exe`
 
 **Spreading**
 
