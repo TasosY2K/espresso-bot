@@ -9,7 +9,7 @@ module.exports = (application) => {
     application.post("/client/register", async (req, res) => {
         const identifier = nanoid();
         const token = nanoid();
-        const ipAddress = "78.87.194.58";
+        const ipAddress = req.ip;
         let ipInfo = await ip.info(ipAddress);
         ipInfo = ipInfo.data;
 
@@ -70,7 +70,7 @@ module.exports = (application) => {
         if (identifier && token && postdata) {
             const verify = await v.validate(identifier, token);
             if (verify) {
-                const ipAddress = "78.87.194.58";
+                const ipAddress = req.ip;
                 let ipInfo = await ip.info(ipAddress);
                 ipInfo = ipInfo.data;
 
